@@ -1,21 +1,25 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Image as ImageIcon } from "lucide-react";
+import { Images } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { useAdminTable } from "@/lib/useAdminTable";
-import { toDatetimeLocalValue, fromDatetimeLocalValue } from "@/lib/date";
-import type { Poster } from "@/lib/types";
-import { getPosterPublicUrl } from "@/components/display/PosterSlide";
+import type { IdleBackground } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import RowControls from "./RowControls";
 import Section from "./Section";
 
-async function uploadPosterFile(file: File): Promise<string> {
+export function getBackgroundPublicUrl(storagePath: string): string {
+  const supabase = createClient();
+  return supabase.storage.from("signage-images").getPublicUrl(storagePath).data
+    .publicUrl;
+}
+
+async function uploadBackgroundFile(file: File): Promise<string> {
   const supabase = createClient();
   const ext = file.name.split(".").pop() || "jpg";
-  const path = `posters/${crypto.randomUUID()}.${ext}`;
+  const path = `backgrounds/${crypto.randomUUID()}.${ext}`;
   const { error } = await supabase.storage
     .from("signage-images")
     .upload(path, file, { cacheControl: "3600", upsert: false });
@@ -23,12 +27,13 @@ async function uploadPosterFile(file: File): Promise<string> {
   return path;
 }
 
-function AddForm({ onAdd }: { onAdd: (row: Partial<Poster>) => void }) {
+function AddForm({
+  onAdd,
+}: {
+  onAdd: (row: Partial<IdleBackground>) => void;
+}) {
   const [file, setFile] = useState<File | null>(null);
   const [caption, setCaption] = useState("");
-  const [startsAt, setStartsAt] = useState("");
-  const [endsAt, setEndsAt] = useState("");
-  const [displaySeconds, setDisplaySeconds] = useState("");
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,22 +43,16 @@ function AddForm({ onAdd }: { onAdd: (row: Partial<Poster>) => void }) {
     setUploading(true);
     setError(null);
     try {
-      const path = await uploadPosterFile(file);
+      const path = await uploadBackgroundFile(file);
       onAdd({
         storage_path: path,
         caption: caption.trim() || null,
-        starts_at: fromDatetimeLocalValue(startsAt) ?? new Date().toISOString(),
-        ends_at: fromDatetimeLocalValue(endsAt),
-        display_seconds: displaySeconds ? Number(displaySeconds) : null,
         is_active: true,
       });
       setFile(null);
       setCaption("");
-      setStartsAt("");
-      setEndsAt("");
-      setDisplaySeconds("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal mengunggah.");
+      setError(err instanceof Error ? err.message : "Gagal mengunggah foto.");
     } finally {
       setUploading(false);
     }
@@ -64,40 +63,23 @@ function AddForm({ onAdd }: { onAdd: (row: Partial<Poster>) => void }) {
       onSubmit={handleSubmit}
       className="mb-4 flex flex-col gap-2 rounded-base border-2 border-dashed border-border bg-background p-3"
     >
-      <input
-        type="file"
-        accept="image/*"
-        required
-        onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-        className="rounded-base border-2 border-border bg-secondary-background p-2 text-sm font-base text-foreground"
-      />
-      <p className="text-xs text-foreground/70">
-        💡 <span className="font-semibold text-foreground">Tips Rasio:</span> Disarankan rasio <strong>9:16</strong> (misal 1080×1920 px) untuk TV Portrait, atau <strong>16:9</strong> (1920×1080 px) untuk TV Landscape. Poster otomatis tampil <em>full</em> pada TV portrait.
-      </p>
-      <Input
-        type="text"
-        placeholder="Keterangan (opsional)"
-        value={caption}
-        onChange={(e) => setCaption(e.target.value)}
-      />
-      <div className="flex flex-col gap-2 sm:flex-row">
-        <Input
-          type="datetime-local"
-          value={startsAt}
-          onChange={(e) => setStartsAt(e.target.value)}
-        />
-        <Input
-          type="datetime-local"
-          value={endsAt}
-          onChange={(e) => setEndsAt(e.target.value)}
+      <div className="flex flex-col gap-1">
+        <label className="text-xs font-heading text-foreground/70">
+          Pilih Foto Latar (JPG, PNG, atau WebP)
+        </label>
+        <input
+          type="file"
+          accept="image/*"
+          required
+          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+          className="rounded-base border-2 border-border bg-secondary-background p-2 text-sm font-base text-foreground"
         />
       </div>
       <Input
-        type="number"
-        min={1}
-        placeholder="Durasi tampil (detik, opsional — pakai default jika kosong)"
-        value={displaySeconds}
-        onChange={(e) => setDisplaySeconds(e.target.value)}
+        type="text"
+        placeholder="Keterangan / Nama Lokasi (contoh: Lab TRPL 1, Gedung WBI)"
+        value={caption}
+        onChange={(e) => setCaption(e.target.value)}
       />
       {error && (
         <p className="rounded-base border-2 border-border bg-destructive px-2 py-1 text-sm font-heading text-destructive-foreground">
@@ -105,7 +87,7 @@ function AddForm({ onAdd }: { onAdd: (row: Partial<Poster>) => void }) {
         </p>
       )}
       <Button type="submit" disabled={uploading}>
-        {uploading ? "Mengunggah..." : "Tambah poster"}
+        {uploading ? "Mengunggah..." : "Tambah Foto Latar"}
       </Button>
     </form>
   );
@@ -116,21 +98,15 @@ function Row({
   onSave,
   controls,
 }: {
-  row: Poster;
-  onSave: (patch: Partial<Poster>) => void;
+  row: IdleBackground;
+  onSave: (patch: Partial<IdleBackground>) => void;
   controls: React.ReactNode;
 }) {
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
-    const displaySeconds = String(form.get("display_seconds") ?? "");
     onSave({
       caption: String(form.get("caption") ?? "").trim() || null,
-      starts_at:
-        fromDatetimeLocalValue(String(form.get("starts_at") ?? "")) ??
-        row.starts_at,
-      ends_at: fromDatetimeLocalValue(String(form.get("ends_at") ?? "")),
-      display_seconds: displaySeconds ? Number(displaySeconds) : null,
     });
   }
 
@@ -141,37 +117,18 @@ function Row({
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={getPosterPublicUrl(row.storage_path)}
+        src={getBackgroundPublicUrl(row.storage_path)}
         alt={row.caption ?? ""}
-        className="h-32 w-full rounded-base border-2 border-border object-cover"
+        className="h-36 w-full rounded-base border-2 border-border object-cover"
       />
       <Input
         name="caption"
         defaultValue={row.caption ?? ""}
-        placeholder="Keterangan"
-      />
-      <div className="flex flex-col gap-2 sm:flex-row">
-        <Input
-          type="datetime-local"
-          name="starts_at"
-          defaultValue={toDatetimeLocalValue(row.starts_at)}
-        />
-        <Input
-          type="datetime-local"
-          name="ends_at"
-          defaultValue={toDatetimeLocalValue(row.ends_at)}
-        />
-      </div>
-      <Input
-        type="number"
-        min={1}
-        name="display_seconds"
-        defaultValue={row.display_seconds ?? ""}
-        placeholder="Durasi tampil (detik)"
+        placeholder="Keterangan / Nama Lokasi"
       />
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Button type="submit" variant="neutral" size="sm">
-          Simpan
+          Simpan Keterangan
         </Button>
         {controls}
       </div>
@@ -179,21 +136,36 @@ function Row({
   );
 }
 
-export default function PostersSection({
+export default function BackgroundsSection({
   alwaysOpen,
 }: { alwaysOpen?: boolean } = {}) {
   const { rows, loading, error, add, update, remove, toggleActive, move } =
-    useAdminTable<Poster>("posters");
+    useAdminTable<IdleBackground>("idle_backgrounds");
 
   return (
     <Section
-      id="poster"
-      title="Poster"
-      icon={<ImageIcon size={18} />}
+      id="latar"
+      title="Foto Latar Layar Siaga"
+      icon={<Images size={18} />}
       badge={`${rows.length}`}
       alwaysOpen={alwaysOpen}
     >
+      <div className="mb-3 rounded-base border-2 border-border bg-secondary-background p-3 text-xs text-foreground/70">
+        <p className="font-heading text-sm text-foreground">
+          Foto Latar Layar Siaga (Idle Clock & Quotes)
+        </p>
+        <p className="mt-1">
+          Foto yang diunggah di sini akan diputar bergiliran (dengan efek gerak 3D Ken Burns) di layar siaga saat jam dan kutipan motivasi ditampilkan.
+        </p>
+        {rows.length === 0 && !loading && (
+          <p className="mt-2 font-heading text-foreground/80">
+            ℹ️ Belum ada foto yang diunggah. Sistem saat ini menggunakan wallpaper pemandangan default.
+          </p>
+        )}
+      </div>
+
       <AddForm onAdd={add} />
+
       {loading && <p className="text-sm text-foreground/50">Memuat...</p>}
       {error && <p className="text-sm text-destructive">{error}</p>}
       {rows.map((row, i) => (
@@ -210,7 +182,7 @@ export default function PostersSection({
               onDelete={() => remove(row.id)}
               canMoveUp={i > 0}
               canMoveDown={i < rows.length - 1}
-              itemLabel="poster ini"
+              itemLabel="foto latar ini"
             />
           }
         />

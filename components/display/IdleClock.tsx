@@ -3,73 +3,131 @@
 import { useEffect, useRef, useState } from "react";
 import { toYouTubeEmbedUrl } from "@/lib/youtube";
 import { formatEnglishDate, formatTimeDigits } from "@/lib/date";
-import { NATURE_IMAGES, randomImageIndex } from "@/lib/idleNature";
-import { ENTREPRENEUR_QUOTES, randomQuoteIndex } from "@/lib/idleQuotes";
+import { NATURE_IMAGES } from "@/lib/idleNature";
+import { TECH_QUOTES, randomQuoteIndex } from "@/lib/idleQuotes";
+import FloatingTechBackground from "./FloatingTechBackground";
 import SplitFlapClock from "./SplitFlapClock";
 
 const NATURE_ROTATE_MS = 30_000;
 const QUOTE_ROTATE_MS = 15_000;
 
-const CLOCK_POSITIONS = ["top-left", "top-right", "bottom-left", "bottom-right"] as const;
-type ClockPosition = (typeof CLOCK_POSITIONS)[number];
+type QuoteVertical = "top" | "middle" | "bottom";
 
-const CLOCK_POSITION_CLASSES: Record<ClockPosition, string> = {
-  "top-left": "left-6 top-6 sm:left-10 sm:top-10",
-  "top-right": "right-6 top-6 sm:right-10 sm:top-10",
-  "bottom-left": "left-6 bottom-6 sm:left-10 sm:bottom-10",
-  "bottom-right": "right-6 bottom-6 sm:right-10 sm:bottom-10",
+type ClockPosition =
+  | "top-left"
+  | "top-center"
+  | "top-right"
+  | "mid-left"
+  | "mid-center"
+  | "mid-right"
+  | "bottom-left"
+  | "bottom-center"
+  | "bottom-right";
+
+const QUOTE_VERTICAL_CLASSES: Record<QuoteVertical, string> = {
+  top: "top-14 sm:top-16",
+  middle: "top-1/2 -translate-y-1/2",
+  bottom: "bottom-12 sm:bottom-14",
 };
 
-// Picks a random clock corner, avoiding an immediate repeat of `exclude`.
-function randomClockPosition(exclude?: ClockPosition): ClockPosition {
-  const options = exclude
-    ? CLOCK_POSITIONS.filter((p) => p !== exclude)
-    : CLOCK_POSITIONS;
-  return options[Math.floor(Math.random() * options.length)];
+const CLOCK_POSITION_CLASSES: Record<ClockPosition, string> = {
+  "top-left": "top-14 sm:top-16 left-4 sm:left-8",
+  "top-center": "top-14 sm:top-16 left-1/2 -translate-x-1/2",
+  "top-right": "top-14 sm:top-16 right-4 sm:right-8",
+  "mid-left": "top-1/2 -translate-y-1/2 left-4 sm:left-8",
+  "mid-center": "top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2",
+  "mid-right": "top-1/2 -translate-y-1/2 right-4 sm:right-8",
+  "bottom-left": "bottom-12 sm:bottom-14 left-4 sm:left-8",
+  "bottom-center": "bottom-12 sm:bottom-14 left-1/2 -translate-x-1/2",
+  "bottom-right": "bottom-12 sm:bottom-14 right-4 sm:right-8",
+};
+
+const QUOTE_VERTICALS: QuoteVertical[] = ["top", "middle", "bottom"];
+
+// Collision-free map: clock only picks slots that never collide with the quote card
+const SAFE_CLOCK_MAP: Record<QuoteVertical, ClockPosition[]> = {
+  top: [
+    "mid-left",
+    "mid-center",
+    "mid-right",
+    "bottom-left",
+    "bottom-center",
+    "bottom-right",
+  ],
+  middle: [
+    "top-left",
+    "top-center",
+    "top-right",
+    "bottom-left",
+    "bottom-center",
+    "bottom-right",
+  ],
+  bottom: [
+    "top-left",
+    "top-center",
+    "top-right",
+    "mid-left",
+    "mid-center",
+    "mid-right",
+  ],
+};
+
+function pickRandomPositions(
+  prevQuote?: QuoteVertical,
+  prevClock?: ClockPosition
+): { quote: QuoteVertical; clock: ClockPosition } {
+  const quoteCandidates = prevQuote
+    ? QUOTE_VERTICALS.filter((v) => v !== prevQuote)
+    : QUOTE_VERTICALS;
+  const quote =
+    quoteCandidates[Math.floor(Math.random() * quoteCandidates.length)];
+
+  const safeList = SAFE_CLOCK_MAP[quote];
+  const clockCandidates = prevClock
+    ? safeList.filter((c) => c !== prevClock)
+    : safeList;
+  const clock =
+    clockCandidates[Math.floor(Math.random() * clockCandidates.length)] ||
+    safeList[0];
+
+  return { quote, clock };
 }
 
-// Pan + tilt for the 3D Ken Burns background effect — cycled by photo
-// index so consecutive photos don't all drift the same way. rx/ry add
-// the rotateX/rotateY tilt that (combined with the container's
-// `perspective`) makes the pan read as depth instead of a flat slide.
-const PARALLAX_OFFSETS = [
-  { x: "-4%", y: "-3%", rx: "2deg", ry: "-2.5deg" },
-  { x: "4%", y: "-3%", rx: "-2deg", ry: "2.5deg" },
-  { x: "-4%", y: "3%", rx: "2deg", ry: "2.5deg" },
-  { x: "4%", y: "3%", rx: "-2deg", ry: "-2.5deg" },
-];
-
-// Idle-state background: only used when there is truly no other active
-// content — see Slideshow.tsx. Two independent, optional layers:
-//   - youtubeUrl: a looping muted video fills the screen (cropped to
-//     always cover, like CSS background-size:cover). When set, this
-//     takes over the whole screen with just the big clock overlay.
-//   - audioUrl: a plain <audio> file looping in the background, remote
-//     controllable (play/pause) from /admin via audioPlaying — kept as a
-//     native element (not inside the YouTube iframe) because native
-//     same-page media is generally given more autoplay leeway by
-//     browsers than third-party embedded iframes — YouTube's own embed
-//     wouldn't reliably autoplay even muted on some kiosk setups.
-// When no video is configured, the background instead rotates through
-// curated nature photos with a small clock and rotating entrepreneur
-// quotes overlaid, so the idle screen isn't just a static clock.
 export default function IdleClock({
   now,
   youtubeUrl,
   audioUrl,
   audioPlaying,
+  customLogoUrl,
+  backgroundUrls,
 }: {
   now: Date;
   youtubeUrl: string | null;
   audioUrl: string | null;
   audioPlaying: boolean;
+  customLogoUrl?: string | null;
+  backgroundUrls?: string[];
 }) {
+  const images =
+    backgroundUrls && backgroundUrls.length > 0
+      ? backgroundUrls
+      : NATURE_IMAGES;
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [natureIndex, setNatureIndex] = useState(() => randomImageIndex());
-  const [quoteIndex, setQuoteIndex] = useState(() => randomQuoteIndex());
-  const [clockPosition, setClockPosition] = useState<ClockPosition>(() =>
-    randomClockPosition(),
+  const [natureIndex, setNatureIndex] = useState(() =>
+    images.length > 1 ? Math.floor(Math.random() * images.length) : 0
   );
+  const [quoteIndex, setQuoteIndex] = useState(() => randomQuoteIndex());
+  const [positions, setPositions] = useState<{
+    quote: QuoteVertical;
+    clock: ClockPosition;
+  }>(() => pickRandomPositions());
+
+  useEffect(() => {
+    if (natureIndex >= images.length && images.length > 0) {
+      setNatureIndex(0);
+    }
+  }, [images.length, natureIndex]);
 
   useEffect(() => {
     const el = audioRef.current;
@@ -83,14 +141,20 @@ export default function IdleClock({
     }
   }, [audioPlaying, audioUrl]);
 
+  // Synchronously rotate background & move clock & quote to new collision-free random positions
   useEffect(() => {
     if (youtubeUrl) return;
     const id = setInterval(() => {
-      setNatureIndex((i) => randomImageIndex(i));
-      setClockPosition((p) => randomClockPosition(p));
+      setNatureIndex((prev) => {
+        if (images.length <= 1) return 0;
+        let next = Math.floor(Math.random() * images.length);
+        if (next === prev) next = (next + 1) % images.length;
+        return next;
+      });
+      setPositions((prev) => pickRandomPositions(prev.quote, prev.clock));
     }, NATURE_ROTATE_MS);
     return () => clearInterval(id);
-  }, [youtubeUrl]);
+  }, [youtubeUrl, images.length]);
 
   useEffect(() => {
     if (youtubeUrl) return;
@@ -101,11 +165,11 @@ export default function IdleClock({
   }, [youtubeUrl]);
 
   const { hours, minutes, seconds } = formatTimeDigits(now);
-  const quote = ENTREPRENEUR_QUOTES[quoteIndex];
+  const quote = TECH_QUOTES[quoteIndex];
 
   return (
     <div
-      className="relative h-full w-full overflow-hidden bg-black"
+      className="relative h-full w-full overflow-hidden bg-slate-950"
       style={{ perspective: "1400px" }}
     >
       {youtubeUrl ? (
@@ -119,91 +183,121 @@ export default function IdleClock({
           />
         </div>
       ) : (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          key={natureIndex}
-          src={NATURE_IMAGES[natureIndex]}
-          alt=""
-          className="idle-nature-bg idle-nature-parallax absolute inset-0 h-full w-full object-cover"
-          style={
-            {
-              "--parallax-x":
-                PARALLAX_OFFSETS[natureIndex % PARALLAX_OFFSETS.length].x,
-              "--parallax-y":
-                PARALLAX_OFFSETS[natureIndex % PARALLAX_OFFSETS.length].y,
-              "--parallax-rx":
-                PARALLAX_OFFSETS[natureIndex % PARALLAX_OFFSETS.length].rx,
-              "--parallax-ry":
-                PARALLAX_OFFSETS[natureIndex % PARALLAX_OFFSETS.length].ry,
-            } as React.CSSProperties
+        /* Floating Programming Language Badges & Cyber Background */
+        <FloatingTechBackground
+          photoUrl={
+            backgroundUrls && backgroundUrls.length > 0
+              ? images[natureIndex % images.length]
+              : null
           }
         />
       )}
+
       {audioUrl && (
         // eslint-disable-next-line jsx-a11y/media-has-caption
         <audio ref={audioRef} src={audioUrl} loop className="hidden" />
       )}
-      <div className="absolute inset-0 bg-black/45" />
 
-      <div className="absolute inset-x-0 top-3 z-10 flex justify-center sm:top-4">
-        <div className="idle-foreground-float flex items-center gap-3 rounded-base border-4 border-border bg-secondary-background/95 px-4 py-2 shadow-shadow sm:gap-4 sm:px-6 sm:py-3">
+      {/* Header Dual Logo Badge (Politeknik WBI & HIMATRPL) — Extra compact in portrait */}
+      <div className="absolute inset-x-0 top-4 z-20 flex justify-center portrait:top-3">
+        <div className="idle-foreground-float glass-panel-subtle flex items-center gap-3 rounded-2xl px-5 py-2.5 sm:gap-4 sm:px-7 sm:py-3.5 portrait:gap-2 portrait:rounded-lg portrait:px-2.5 portrait:py-1">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/logos/wbi.webp"
-            alt="WBI"
-            className="h-8 w-auto object-contain sm:h-12"
+            alt="Politeknik WBI"
+            className="h-8 w-auto object-contain drop-shadow sm:h-11 portrait:h-5"
           />
-          {/* Source PNG has large symmetric transparent padding (content is
-              only ~45% of the canvas height) — crop it out with object-cover
-              on a matching aspect-ratio box so it reads the same visual
-              height as the WBI logo instead of looking tiny. */}
+          <div className="h-6 w-px bg-white/20 sm:h-8 portrait:h-3.5" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/logos/wbiic.webp"
-            alt="WBIIC"
-            className="aspect-[974/270] h-8 w-auto object-cover object-center sm:h-12"
+            src={customLogoUrl || "/logos/trpl.png"}
+            alt="TRPL"
+            className="h-8 w-auto object-contain drop-shadow sm:h-11 portrait:h-5"
           />
         </div>
       </div>
 
+      {/* Clock & Quote Overlays */}
       {youtubeUrl ? (
-        <div className="relative flex h-full w-full items-center justify-center px-8">
-          <div className="flex flex-col items-center gap-4 rounded-base border-4 border-border bg-secondary-background px-10 py-10 shadow-shadow sm:px-16 sm:py-12">
+        <div className="relative z-10 flex h-full w-full items-center justify-center px-8">
+          <div className="glass-panel flex flex-col items-center gap-4 rounded-3xl px-10 py-10 sm:px-16 sm:py-12 portrait:gap-2 portrait:rounded-xl portrait:px-4 portrait:py-4 portrait:w-auto portrait:max-w-[200px]">
             <SplitFlapClock now={now} />
-            <p className="text-center text-lg font-heading text-foreground/70 sm:text-2xl">
+            <p className="text-center text-lg font-heading text-foreground/70 sm:text-2xl portrait:text-xs">
               {formatEnglishDate(now)}
             </p>
           </div>
         </div>
       ) : (
         <>
+          {/* Developer Cyber Glass Clock Widget
+              - Extra compact size
+              - Freely moves to any safe random position across the 9-grid without colliding with quote card
+          */}
           <div
-            className={`idle-foreground-float absolute flex flex-col items-center gap-1 rounded-base border-4 border-border bg-secondary-background/95 px-6 py-4 shadow-shadow sm:px-8 sm:py-5 ${CLOCK_POSITION_CLASSES[clockPosition]}`}
+            className={`idle-foreground-float glass-panel absolute z-20 flex flex-col items-center rounded-xl px-3 py-1.5 sm:px-3.5 sm:py-2 gap-0.5 shadow-lg transition-all duration-700 pointer-events-none ${CLOCK_POSITION_CLASSES[positions.clock]}`}
           >
-            <p className="font-heading text-5xl tabular-nums text-foreground sm:text-6xl">
+            <div className="flex items-center gap-1.5">
+              <span className="h-1 w-1 rounded-full bg-emerald-400 animate-ping" />
+              <span className="font-mono text-[8px] sm:text-[9px] font-bold uppercase tracking-widest text-emerald-300">
+                LIVE
+              </span>
+            </div>
+            <p className="font-mono text-xl sm:text-2xl font-black tabular-nums tracking-tight text-white drop-shadow-sm">
               {hours}:{minutes}:{seconds}
             </p>
-            <p className="text-center text-sm font-heading text-foreground/70 sm:text-lg">
+            <p className="text-center text-[8px] sm:text-[9px] font-mono text-slate-300/80">
               {formatEnglishDate(now)}
             </p>
           </div>
+
+          {/* Code Editor / Terminal Window Glass Quote Card
+              - Horizontally centered always (inset-x-0 flex justify-center)
+              - Vertically moves randomly across top, middle, and bottom without colliding with clock
+          */}
           <div
-            className={`absolute inset-x-0 flex justify-center px-6 ${
-              clockPosition.startsWith("bottom")
-                ? "top-28 sm:top-32"
-                : "bottom-8 sm:bottom-12"
-            }`}
+            className={`absolute inset-x-0 z-10 flex justify-center px-4 transition-all duration-700 pointer-events-none ${QUOTE_VERTICAL_CLASSES[positions.quote]}`}
           >
             <div
               key={quoteIndex}
-              className="idle-nature-bg idle-foreground-float max-w-4xl rounded-base border-4 border-border bg-secondary-background/95 px-8 py-5 text-center shadow-shadow sm:px-12 sm:py-8"
+              className="idle-foreground-float glass-panel w-full max-w-xs sm:max-w-sm overflow-hidden rounded-xl"
             >
-              <p className="font-heading text-2xl text-foreground sm:text-4xl">
-                &ldquo;{quote.text}&rdquo;
-              </p>
-              <p className="mt-3 text-base font-heading text-foreground/70 sm:text-xl">
-                — {quote.author}
-              </p>
+              {/* Terminal / Code Editor Title Bar */}
+              <div className="flex items-center justify-between border-b border-white/10 bg-white/[0.04] px-2.5 py-1.5">
+                <div className="flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#ef4444] shadow-sm shadow-red-500/50" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#eab308] shadow-sm shadow-yellow-500/50" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#22c55e] shadow-sm shadow-emerald-500/50" />
+                  <span className="ml-1 font-mono text-[8px] text-slate-400">
+                    ~/trpl/wisdom.ts
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 rounded-full bg-blue-500/10 px-1.5 py-0 border border-blue-400/25">
+                  <span className="font-mono text-[7px] font-bold text-blue-300 uppercase tracking-widest">
+                    TS
+                  </span>
+                </div>
+              </div>
+
+              {/* Code Editor Content */}
+              <div className="flex p-2.5 sm:p-3">
+                {/* Line Numbers */}
+                <div className="select-none pr-2 font-mono text-[8px] text-slate-500/70 flex flex-col gap-0.5 border-r border-white/10">
+                  <span>01</span>
+                  <span>02</span>
+                </div>
+
+                {/* Quote Text & Author */}
+                <div className="pl-2 flex flex-col justify-center">
+                  <p className="font-heading text-xs sm:text-sm font-semibold leading-snug text-white drop-shadow-sm">
+                    &ldquo;{quote.text}&rdquo;
+                  </p>
+                  <div className="mt-1.5 flex items-center gap-1">
+                    <span className="font-mono text-[8px] sm:text-[9px] font-semibold text-cyan-300">
+                      {"// — "}{quote.author}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </>

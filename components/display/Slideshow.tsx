@@ -24,6 +24,8 @@ export default function Slideshow({
   idleYoutubeUrl,
   idleAudioUrl,
   idleAudioPlaying,
+  displayLogoUrl,
+  idleBackgroundUrls,
 }: {
   views: DisplayView[];
   now: Date;
@@ -31,6 +33,8 @@ export default function Slideshow({
   idleYoutubeUrl?: string | null;
   idleAudioUrl?: string | null;
   idleAudioPlaying?: boolean;
+  displayLogoUrl?: string | null;
+  idleBackgroundUrls?: string[];
 }) {
   const [index, setIndex] = useState(0);
   const [visible, setVisible] = useState(true);
@@ -51,6 +55,13 @@ export default function Slideshow({
   // Only the clock (no other active content): render it statically full
   // screen instead of running a pointless one-item rotation.
   const isStatic = views.length <= 1;
+
+  // Always ensure visible is true when in static mode so screen never stays blank
+  useEffect(() => {
+    if (isStatic) {
+      setVisible(true);
+    }
+  }, [isStatic]);
 
   // A stable identity for the current view set. `views` itself is a new
   // array reference on every parent render (it's rebuilt each clock tick),
@@ -121,6 +132,8 @@ export default function Slideshow({
             youtubeUrl={idleYoutubeUrl ?? null}
             audioUrl={idleAudioUrl ?? null}
             audioPlaying={idleAudioPlaying ?? true}
+            customLogoUrl={displayLogoUrl}
+            backgroundUrls={idleBackgroundUrls}
           />
         )}
         {current.kind === "announcements" && (

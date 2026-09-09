@@ -1,5 +1,5 @@
 -- ============================================================================
--- Klepak digital signage — schema
+-- Klepak TRPL digital signage — schema
 -- Run this whole file once in the Supabase SQL editor (Project > SQL Editor).
 -- Safe to re-run: uses `if not exists` / `on conflict` where practical.
 -- ============================================================================
@@ -33,6 +33,16 @@ create table if not exists posters (
   sort_order       integer not null default 0,
   is_active        boolean not null default true,
   created_at       timestamptz not null default now()
+);
+
+-- Background photos for idle/quotes screen
+create table if not exists idle_backgrounds (
+  id           uuid primary key default gen_random_uuid(),
+  storage_path text not null,
+  caption      text,
+  sort_order   integer not null default 0,
+  is_active    boolean not null default true,
+  created_at   timestamptz not null default now()
 );
 
 -- Real agenda table, e.g. exam/assessment schedule ("Jadwal Hari Ini")
@@ -93,9 +103,15 @@ create table if not exists settings (
   idle_youtube_url         text,
   idle_audio_url           text,
   idle_audio_playing       boolean not null default true,
+  display_title            text default 'Klepak TRPL',
+  display_logo_url         text,
   updated_at               timestamptz not null default now(),
   constraint settings_singleton check (id = 1)
 );
+-- Migration support for existing settings tables
+alter table settings add column if not exists display_title text default 'Klepak TRPL';
+alter table settings add column if not exists display_logo_url text;
+
 insert into settings (id, poster_default_seconds)
 values (1, 8)
 on conflict (id) do nothing;
@@ -142,6 +158,20 @@ create policy "posters_admin_insert" on posters
 create policy "posters_admin_update" on posters
   for update to authenticated using (true) with check (true);
 create policy "posters_admin_delete" on posters
+  for delete to authenticated using (true);
+
+-- idle_backgrounds
+alter table idle_backgrounds enable row level security;
+create policy "idle_backgrounds_public_read_live" on idle_backgrounds
+  for select to anon
+  using (is_active = true);
+create policy "idle_backgrounds_admin_select" on idle_backgrounds
+  for select to authenticated using (true);
+create policy "idle_backgrounds_admin_insert" on idle_backgrounds
+  for insert to authenticated with check (true);
+create policy "idle_backgrounds_admin_update" on idle_backgrounds
+  for update to authenticated using (true) with check (true);
+create policy "idle_backgrounds_admin_delete" on idle_backgrounds
   for delete to authenticated using (true);
 
 -- schedule_items
@@ -207,6 +237,7 @@ create policy "settings_admin_update" on settings
 
 alter publication supabase_realtime add table announcements;
 alter publication supabase_realtime add table posters;
+alter publication supabase_realtime add table idle_backgrounds;
 alter publication supabase_realtime add table schedule_items;
 alter publication supabase_realtime add table qr_links;
 alter publication supabase_realtime add table videos;

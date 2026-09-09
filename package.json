@@ -1,6 +1,7 @@
 {
-  "name": "klepak",
+  "name": "klepaktrpl",
   "version": "0.1.0",
+  "description": "Digital Signage Laboratorium & Program Studi Teknologi Rekayasa Perangkat Lunak",
   "private": true,
   "scripts": {
     "dev": "next dev",

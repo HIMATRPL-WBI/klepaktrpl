@@ -3,6 +3,8 @@
 @import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
+@custom-variant portrait (@media (orientation: portrait));
+@custom-variant landscape (@media (orientation: landscape));
 
 @layer utilities {
   .text-balance {
@@ -275,7 +277,99 @@
 @media (prefers-reduced-motion: reduce) {
   .idle-nature-bg,
   .idle-nature-parallax,
-  .idle-foreground-float {
+  .idle-foreground-float,
+  .tech-float-gentle-1,
+  .tech-float-gentle-2,
+  .tech-marquee-track {
     animation: none !important;
   }
 }
+
+/* ============================================================================
+   PROGRAMMING THEME: CLEAN & SUBTLE AMBIENT TECH ANIMATIONS (LINEAR / VERCEL STYLE)
+   ============================================================================ */
+
+.cyber-grid-bg {
+  background-image: 
+    radial-gradient(circle at 50% 30%, rgba(47, 95, 237, 0.06) 0%, transparent 70%),
+    linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 100% 100%, 36px 36px, 36px 36px;
+}
+
+/* Subtle, organic breathing float — gentle, elegant, not distracting */
+.tech-float-gentle-1 {
+  animation: tech-float-subtle-1 9s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite alternate;
+  will-change: transform;
+}
+
+.tech-float-gentle-2 {
+  animation: tech-float-subtle-2 11s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite alternate;
+  will-change: transform;
+}
+
+@keyframes tech-float-subtle-1 {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  100% {
+    transform: translate3d(0, -10px, 0) rotate(1.5deg);
+  }
+}
+
+@keyframes tech-float-subtle-2 {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  100% {
+    transform: translate3d(0, -12px, 0) rotate(-1.5deg);
+  }
+}
+
+/* Infinite smooth horizontal marquee for the bottom tech stack ribbon */
+.tech-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: tech-marquee 38s linear infinite;
+  will-change: transform;
+}
+
+@keyframes tech-marquee {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.marquee-mask {
+  mask-image: linear-gradient(to right, transparent, black 12%, black 88%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 12%, black 88%, transparent);
+}
+
+
+
+/* Glassmorphism panel styles */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 
+    0 20px 48px -10px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+}
+
+.glass-panel-subtle {
+  background: rgba(15, 23, 42, 0.35);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 8px 32px 0 rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+}
+
+
+

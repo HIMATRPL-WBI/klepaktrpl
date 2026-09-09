@@ -1,55 +1,42 @@
-// Rotating entrepreneur quotes shown on the idle screen when no idle
-// YouTube video is configured.
+// Rotating tech, software engineering, and computer science quotes shown
+// on the idle screen of Klepak TRPL when no idle YouTube video is configured.
 export type IdleQuote = { text: string; author: string };
 
-export const ENTREPRENEUR_QUOTES: IdleQuote[] = [
-  { text: "Your time is limited, so don't waste it living someone else's life.", author: "Steve Jobs" },
-  { text: "Innovation distinguishes between a leader and a follower.", author: "Steve Jobs" },
-  { text: "If you really look closely, most overnight successes took a long time.", author: "Steve Jobs" },
-  { text: "I have not failed. I've just found 10,000 ways that won't work.", author: "Thomas Edison" },
-  { text: "The way to get started is to quit talking and begin doing.", author: "Walt Disney" },
-  { text: "The biggest risk is not taking any risk.", author: "Mark Zuckerberg" },
-  { text: "Your most unhappy customers are your greatest source of learning.", author: "Bill Gates" },
-  { text: "It's fine to celebrate success but it is more important to heed the lessons of failure.", author: "Bill Gates" },
-  { text: "Business opportunities are like buses, there's always another one coming.", author: "Richard Branson" },
-  { text: "Do not be embarrassed by your failures, learn from them and start again.", author: "Richard Branson" },
-  { text: "If you don't build your dream, someone else will hire you to help them build theirs.", author: "Tony Gaskins" },
-  { text: "Opportunities don't happen. You create them.", author: "Chris Grosser" },
-  { text: "Don't be afraid to give up the good to go for the great.", author: "John D. Rockefeller" },
-  { text: "I never dreamed about success. I worked for it.", author: "Estée Lauder" },
-  { text: "Whether you think you can or you think you can't, you're right.", author: "Henry Ford" },
-  { text: "Chase the vision, not the money; the money will end up following you.", author: "Tony Hsieh" },
-  { text: "Build something 100 people love, not something 1 million people kind of like.", author: "Brian Chesky" },
-  { text: "If you are not embarrassed by the first version of your product, you've launched too late.", author: "Reid Hoffman" },
-  { text: "Ideas are easy. Implementation is hard.", author: "Guy Kawasaki" },
-  { text: "Done is better than perfect.", author: "Sheryl Sandberg" },
-  { text: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
-  { text: "Stay hungry, stay foolish.", author: "Steve Jobs" },
-  { text: "Your brand is what other people say about you when you're not in the room.", author: "Jeff Bezos" },
-  { text: "If you double the number of experiments you do per year, you're going to double your inventiveness.", author: "Jeff Bezos" },
-  { text: "When something is important enough, you do it even if the odds are not in your favor.", author: "Elon Musk" },
-  { text: "Persistence is very important. You should not give up unless you are forced to give up.", author: "Elon Musk" },
-  { text: "Price is what you pay. Value is what you get.", author: "Warren Buffett" },
-  { text: "Someone's sitting in the shade today because someone planted a tree a long time ago.", author: "Warren Buffett" },
-  { text: "The biggest adventure you can take is to live the life of your dreams.", author: "Oprah Winfrey" },
-  { text: "Failure is not the opposite of success; it's part of success.", author: "Arianna Huffington" },
-  { text: "Work like there is someone working 24 hours a day to take it away from you.", author: "Mark Cuban" },
-  { text: "Never give up. Today is hard, tomorrow will be worse, but the day after tomorrow will be sunshine.", author: "Jack Ma" },
-  { text: "The best way to predict the future is to create it.", author: "Peter Drucker" },
-  { text: "Failure is simply the opportunity to begin again, this time more intelligently.", author: "Henry Ford" },
-  { text: "There is no substitute for hard work.", author: "Thomas Edison" },
-  { text: "All our dreams can come true, if we have the courage to pursue them.", author: "Walt Disney" },
-  { text: "Always deliver more than expected.", author: "Larry Page" },
-  { text: "If you don't design your own life plan, chances are you'll fall into someone else's plan.", author: "Jim Rohn" },
-  { text: "Don't be intimidated by what you don't know. That can be your greatest strength.", author: "Sara Blakely" },
-  { text: "Success is best when it's shared.", author: "Howard Schultz" },
-  { text: "In order to be irreplaceable one must always be different.", author: "Coco Chanel" },
+export const TECH_QUOTES: IdleQuote[] = [
+  { text: "Talk is cheap. Show me the code.", author: "Linus Torvalds" },
+  { text: "The most dangerous phrase in the language is: We've always done it this way.", author: "Grace Hopper" },
+  { text: "Any fool can write code that a computer can understand. Good programmers write code that humans can understand.", author: "Martin Fowler" },
+  { text: "Programs must be written for people to read, and only incidentally for machines to execute.", author: "Harold Abelson" },
+  { text: "Sometimes it is the people no one can imagine anything of who do the things no one can imagine.", author: "Alan Turing" },
+  { text: "UNIX is basically a simple operating system, but you have to be a genius to understand the simplicity.", author: "Dennis Ritchie" },
+  { text: "Premature optimization is the root of all evil.", author: "Donald Knuth" },
+  { text: "Simplicity is prerequisite for reliability.", author: "Edsger W. Dijkstra" },
+  { text: "Make it work, make it right, make it fast.", author: "Kent Beck" },
+  { text: "One of my most productive days was throwing away 1,000 lines of code.", author: "Ken Thompson" },
+  { text: "Debugging is twice as hard as writing the code in the first place.", author: "Brian Kernighan" },
+  { text: "There was no choice but to be pioneers; no time to be a beginner.", author: "Margaret Hamilton" },
+  { text: "The best way to predict the future is to invent it.", author: "Alan Kay" },
+  { text: "Code is read much more often than it is written.", author: "Guido van Rossum" },
+  { text: "Good code is its own best documentation.", author: "Steve McConnell" },
+  { text: "Focus is a matter of deciding what things you're not going to do.", author: "John Carmack" },
+  { text: "Truth can only be found in one place: the code.", author: "Robert C. Martin" },
+  { text: "There are only two kinds of languages: the ones people complain about and the ones nobody uses.", author: "Bjarne Stroustrup" },
+  { text: "What one programmer can do in one month, two programmers can do in two months.", author: "Fred Brooks" },
+  { text: "The Web as I envisaged it, we have not seen it yet. The future is still so much bigger than the past.", author: "Tim Berners-Lee" },
+  { text: "The function of good software is to make the complex appear to be simple.", author: "Grady Booch" },
+  { text: "First, solve the problem. Then, write the code.", author: "John Johnson" },
+  { text: "Experience is the name everyone gives to their mistakes.", author: "Oscar Wilde" },
+  { text: "Knowledge is power, but sharing software empowers everyone.", author: "Hima TRPL" },
+  { text: "Stay curious, keep debugging, and never stop building.", author: "Syafrizal Amri Fajar" },
 ];
+
+// Alias for backward compatibility with existing imports
+export const ENTREPRENEUR_QUOTES = TECH_QUOTES;
 
 // Picks a random index, avoiding an immediate repeat of `exclude`.
 export function randomQuoteIndex(exclude?: number): number {
-  if (ENTREPRENEUR_QUOTES.length <= 1) return 0;
-  let next = Math.floor(Math.random() * ENTREPRENEUR_QUOTES.length);
-  if (next === exclude) next = (next + 1) % ENTREPRENEUR_QUOTES.length;
+  if (TECH_QUOTES.length <= 1) return 0;
+  let next = Math.floor(Math.random() * TECH_QUOTES.length);
+  if (next === exclude) next = (next + 1) % TECH_QUOTES.length;
   return next;
 }

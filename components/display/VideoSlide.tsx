@@ -25,9 +25,18 @@ export default function VideoSlide({
   }
 
   return (
-    <div className="flex h-full w-full items-center justify-center bg-black">
+    <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-black">
+      {/* Ambient blurred backdrop for seamless edge-to-edge feel */}
       <video
-        className="h-full w-full object-contain"
+        className="absolute inset-0 h-full w-full scale-110 object-cover opacity-25 filter blur-3xl"
+        src={video.source_value}
+        autoPlay
+        muted
+        loop
+        playsInline
+      />
+      <video
+        className="relative z-10 h-full w-full object-contain"
         src={video.source_value}
         autoPlay
         muted

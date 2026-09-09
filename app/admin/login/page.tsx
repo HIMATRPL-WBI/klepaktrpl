@@ -42,8 +42,8 @@ export default function AdminLoginPage() {
         onSubmit={handleSubmit}
         className="w-full max-w-sm rounded-base border-2 border-border bg-secondary-background p-6 shadow-shadow"
       >
-        <h1 className="mb-1 font-heading text-2xl text-foreground">Klepak</h1>
-        <p className="mb-6 text-sm text-foreground/60">Admin login</p>
+        <h1 className="mb-1 font-heading text-2xl text-foreground">Klepak TRPL</h1>
+        <p className="mb-6 text-sm text-foreground/60">Portal Admin Signage TRPL</p>
 
         <Label className="mb-1 block">Email</Label>
         <Input

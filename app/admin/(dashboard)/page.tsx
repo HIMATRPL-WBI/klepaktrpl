@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   CalendarClock,
   Image as ImageIcon,
+  Images,
   Megaphone,
   QrCode,
   Settings as SettingsIcon,
@@ -28,6 +29,12 @@ const CARDS: {
     title: "Poster",
     description: "Atur poster/gambar yang tampil bergiliran.",
     icon: <ImageIcon size={22} />,
+  },
+  {
+    href: "/admin/latar",
+    title: "Foto Latar",
+    description: "Unggah & kelola foto latar layar siaga / quotes.",
+    icon: <Images size={22} />,
   },
   {
     href: "/admin/jadwal",

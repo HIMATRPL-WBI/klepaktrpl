@@ -23,6 +23,15 @@ export interface Poster {
   created_at: string;
 }
 
+export interface IdleBackground {
+  id: string;
+  storage_path: string;
+  caption: string | null;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+}
+
 export interface ScheduleItem {
   id: string;
   event_date: string; // YYYY-MM-DD
@@ -74,6 +83,8 @@ export interface Settings {
   idle_youtube_url: string | null;
   idle_audio_url: string | null;
   idle_audio_playing: boolean;
+  display_title?: string | null;
+  display_logo_url?: string | null;
   updated_at: string;
 }
 

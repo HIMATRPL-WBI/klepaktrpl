@@ -20,16 +20,16 @@ export default function QrSlide({ link }: { link: QrLink }) {
   }, [link.url]);
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center gap-8 bg-background px-8">
+    <div className="flex h-full w-full flex-col items-center justify-center gap-8 bg-background px-8 portrait:px-6 portrait:gap-6">
       <canvas
         ref={canvasRef}
-        className="rounded-base border-2 border-border bg-secondary-background p-4 shadow-shadow"
+        className="rounded-base border-2 border-border bg-secondary-background p-4 shadow-shadow portrait:scale-95 sm:portrait:scale-100"
       />
-      <div className="text-center">
-        <p className="text-2xl font-heading text-foreground sm:text-4xl">
+      <div className="text-center portrait:max-w-xs">
+        <p className="text-2xl font-heading text-foreground sm:text-4xl portrait:text-xl sm:portrait:text-2xl">
           {link.title}
         </p>
-        <p className="mt-2 break-all text-base text-foreground/60">
+        <p className="mt-2 break-all text-base text-foreground/60 portrait:text-xs">
           {link.url}
         </p>
       </div>

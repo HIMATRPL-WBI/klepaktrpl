@@ -7,6 +7,7 @@ import type {
   Announcement,
   DisplayView,
   EmergencyOverride,
+  IdleBackground,
   Poster,
   QrLink,
   ScheduleItem,
@@ -35,6 +36,7 @@ export default function DisplayPage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>([]);
   const [posters, setPosters] = useState<Poster[]>([]);
+  const [idleBackgrounds, setIdleBackgrounds] = useState<IdleBackground[]>([]);
   const [qrLinks, setQrLinks] = useState<QrLink[]>([]);
   const [videos, setVideos] = useState<Video[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -57,6 +59,7 @@ export default function DisplayPage() {
         videosRes,
         settingsRes,
         emergencyRes,
+        backgroundsRes,
       ] = await Promise.all([
         supabase
           .from("announcements")
@@ -90,6 +93,11 @@ export default function DisplayPage() {
           .select("*")
           .eq("id", 1)
           .maybeSingle(),
+        supabase
+          .from("idle_backgrounds")
+          .select("*")
+          .eq("is_active", true)
+          .order("sort_order", { ascending: true }),
       ]);
 
       const firstError =
@@ -106,6 +114,7 @@ export default function DisplayPage() {
       setAnnouncements(announcementsRes.data ?? []);
       setScheduleItems(scheduleRes.data ?? []);
       setPosters(postersRes.data ?? []);
+      setIdleBackgrounds(backgroundsRes.data ?? []);
       setQrLinks(qrRes.data ?? []);
       setVideos(videosRes.data ?? []);
       setSettings(settingsRes.data ?? null);
@@ -128,7 +137,7 @@ export default function DisplayPage() {
   // Realtime: any admin edit on these tables refetches immediately.
   useEffect(() => {
     const channel = supabase
-      .channel("klepak-display")
+      .channel("klepaktrpl-display")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "announcements" },
@@ -137,6 +146,11 @@ export default function DisplayPage() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "posters" },
+        fetchAll,
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "idle_backgrounds" },
         fetchAll,
       )
       .on(
@@ -215,6 +229,7 @@ export default function DisplayPage() {
     content.sort((a, b) => a.data.sort_order - b.data.sort_order);
 
     const rotating: DisplayView[] = [
+      { kind: "clock" as const },
       ...(liveAnnouncements.length > 0
         ? [{ kind: "announcements" as const, data: liveAnnouncements }]
         : []),
@@ -224,10 +239,16 @@ export default function DisplayPage() {
       ...content,
     ];
 
-    // Clock only shows up when there is nothing else at all — real content
-    // rotates on its own without the clock interrupting it.
-    return rotating.length > 0 ? rotating : [{ kind: "clock" as const }];
+    return rotating;
   }, [posters, qrLinks, videos, now, liveAnnouncements, scheduleItems]);
+
+  const idleBackgroundUrls = useMemo(() => {
+    return idleBackgrounds.map(
+      (b) =>
+        supabase.storage.from("signage-images").getPublicUrl(b.storage_path).data
+          .publicUrl
+    );
+  }, [idleBackgrounds, supabase]);
 
   const emergencyActive = emergency?.is_active === true;
 
@@ -252,6 +273,8 @@ export default function DisplayPage() {
         idleYoutubeUrl={settings?.idle_youtube_url}
         idleAudioUrl={settings?.idle_audio_url}
         idleAudioPlaying={settings?.idle_audio_playing ?? true}
+        displayLogoUrl={settings?.display_logo_url}
+        idleBackgroundUrls={idleBackgroundUrls}
       />
     </main>
   );

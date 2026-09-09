@@ -1,141 +1,129 @@
-# Klepak — Digital Signage
+# Klepak TRPL — Digital Signage
 
-Klepak is a two-page digital signage app:
+Sistem informasi *Digital Signage* mandiri untuk **Program Studi Teknologi Rekayasa Perangkat Lunak (TRPL)** dan laboratorium komputasi Politeknik WBI.
 
-- **`/display`** — public, full-screen, meant to run in an old Android TV
-  box's browser in kiosk mode. Right-hand sidebar (split-flap clock,
-  today's announcements, today's schedule) + a crossfade slideshow of
-  posters/QR links (and optional video).
-- **`/admin`** — protected, meant to be used from a phone. One section per
-  content type, plus a prominent emergency-override switch.
+Aplikasi ini terdiri dari dua antarmuka utama:
 
-Every piece of content has a lifecycle (`starts_at` / `ends_at`), so
-outdated posters and announcements disappear on their own — nobody has to
-remember to deactivate anything.
+- **`/display`** — Layar publik *full-screen kiosk*, dioptimalkan untuk TV atau Android TV box. Menampilkan slideshow rotasi pengumuman prodi, jadwal praktikum/sidang/workshop, poster acara, tautan QR, video latar, serta jam siaga (*Idle Screen*) beranimasi dengan logo resmi Politeknik WBI & HIMATRPL serta kutipan seputar *Software Engineering*.
+- **`/admin`** — Panel manajemen konten terproteksi (CRUD Pengumuman, Poster, Jadwal, QR, Video, Override Pengumuman Darurat, dan Pengaturan Sistem).
 
-## Stack
+Setiap konten memiliki siklus aktif (`starts_at` / `ends_at`) otomatis, sehingga konten yang telah kadaluarsa akan hilang dengan sendirinya tanpa perlu dinonaktifkan manual.
 
-Next.js 14 (App Router, TypeScript) · Supabase (Postgres, Auth, Storage,
-Realtime) · Tailwind CSS · deployed to Vercel.
+---
 
-## 1. Run the SQL schema
+## 🛠️ Tech Stack
 
-1. Create a Supabase project.
-2. Open **SQL Editor** in the Supabase dashboard.
-3. Paste the contents of [`supabase/schema.sql`](./supabase/schema.sql) and
-   run it.
+- **Framework**: [Next.js 14](https://nextjs.org/) (App Router, React 18, TypeScript)
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) & Lucide React (Desain Neo-brutalism)
+- **Database & Auth**: [Supabase](https://supabase.com/) (PostgreSQL, Row Level Security, Realtime Pub/Sub, Storage Bucket)
+- **Deployment**: Vercel / Kiosk Android TV
 
-This creates all six content tables (`announcements`, `posters`,
-`schedule_items`, `qr_links`, `videos`, `emergency_override`) plus a
-singleton `settings` table, enables Row Level Security on every table
-(public/anon read is restricted to rows that are `is_active = true` and
-currently inside their `starts_at`/`ends_at` window; all writes require the
-`authenticated` role), enables Realtime on the six content tables, and — as
-part of the same script — creates the `signage-images` Storage bucket and
-its policies.
+---
 
-If you'd rather create the bucket by hand instead of via SQL, see step 2.
+## 🚀 Panduan Memulai Cepat (Setup Guide)
 
-## 2. Create the `signage-images` Storage bucket
+### 1. Jalankan Skema SQL di Supabase
 
-The schema script already creates this bucket. If you skipped that part or
-want to do it manually instead:
+1. Buat proyek baru di [Supabase Dashboard](https://database.new).
+2. Buka menu **SQL Editor** pada proyek Anda.
+3. Salin dan jalankan seluruh isi berkas [`supabase/schema.sql`](./supabase/schema.sql).
 
-1. In the Supabase dashboard, go to **Storage** → **New bucket**.
-2. Name it exactly `signage-images`.
-3. Mark it **Public**.
-4. Add policies allowing `anon` to `SELECT` and `authenticated` to
-   `INSERT`/`UPDATE`/`DELETE` on objects in that bucket (already included in
-   `schema.sql` if you ran it in full).
+Skrip ini akan otomatis membuat:
+- 6 tabel konten (`announcements`, `posters`, `schedule_items`, `qr_links`, `videos`, `emergency_override`) dan 1 tabel singleton `settings`.
+- Kebijakan **Row Level Security (RLS)** untuk proteksi data.
+- **Supabase Realtime** untuk auto-update layar display tanpa perlu refresh browser.
+- Storage bucket publik `signage-images` beserta seluruh policies upload & aksesnya.
 
-## 3. Create the one admin user
+### 2. *(Opsional)* Terapkan Data Awal TRPL (Seed Data)
 
-Klepak has no public sign-up flow — there's a single admin account you
-create by hand:
+Untuk mengisi data awal berupa jadwal lab dan pengumuman TRPL:
+1. Buka kembali **SQL Editor** di dashboard Supabase.
+2. Salin dan jalankan isi berkas [`supabase/seed_trpl.sql`](./supabase/seed_trpl.sql).
 
-1. In the Supabase dashboard, go to **Authentication** → **Users** → **Add
-   user**.
-2. Enter an email and password, and confirm the user (or disable "Confirm
-   email" in Auth settings for local testing).
-3. This is the only account that can sign in at `/admin/login` and write to
-   any table — enforced by the RLS policies in `schema.sql`, not just by
-   hiding UI elements.
+### 3. Buat Akun Admin
 
-## 4. Fill in `.env.local`
+Klepak TRPL menggunakan sistem single-admin via Supabase Auth:
+1. Di dashboard Supabase, buka menu **Authentication** → **Users** → **Add user**.
+2. Masukkan email dan password admin, lalu centang/konfirmasi user.
+3. Akun ini yang digunakan untuk login di `/admin/login`.
+
+### 4. Konfigurasi Variabel Lingkungan (`.env.local`)
+
+Salin template variabel lingkungan:
 
 ```bash
 cp .env.example .env.local
 ```
 
-Then fill in, from **Project Settings → API** in the Supabase dashboard:
+Isi kredensial dari **Project Settings → API** di dashboard Supabase Anda:
 
-```
+```env
 NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-public-key
 ```
 
-Only these two variables are used, and both are safe to expose to the
-browser — the anon key only grants what the RLS policies allow. **Never**
-put the service role key in a `NEXT_PUBLIC_*` variable or anywhere in
-client-side code.
+> [!CAUTION]
+> Jangan pernah memasukkan `service_role key` ke variabel lingkungan publik atau file client-side. Cukup gunakan `anon` key karena otorisasi sudah dijamin oleh RLS.
 
-## 5. Run it
+### 5. Jalankan Secara Lokal
 
 ```bash
 npm install
 npm run dev
 ```
 
-- `http://localhost:3000/display` — the signage screen.
-- `http://localhost:3000/admin` — redirects to `/admin/login` until you sign
-  in with the account from step 3.
+- Buka `http://localhost:3000/display` untuk melihat tampilan layar signage.
+- Buka `http://localhost:3000/admin` untuk masuk ke panel admin (akan diarahkan ke `/admin/login`).
 
-## 6. Deploy to Vercel
+---
 
-1. Push this repo to GitHub (or your Git provider of choice).
-2. In Vercel, **Import Project** and select the repo.
-3. Add the two environment variables from step 4 in the Vercel project's
-   **Settings → Environment Variables**.
-4. Deploy. Point the Android TV box's browser at
-   `https://your-app.vercel.app/display` in kiosk mode.
-
-## Project structure
+## 🖥️ Struktur Direktori
 
 ```
 app/
-  display/page.tsx        public signage screen
-  admin/page.tsx           admin dashboard (protected)
-  admin/login/page.tsx      admin login
+  layout.tsx                  Metadata global & konfigurasi font
+  page.tsx                    Redirect otomatis ke /display
+  display/page.tsx            Halaman publik signage (realtime listener)
+  admin/
+    login/page.tsx            Halaman autentikasi admin
+    (dashboard)/layout.tsx    Header & navigasi dashboard admin
+    (dashboard)/page.tsx      Ringkasan dashboard
+    (dashboard)/pengumuman/   Manajemen pengumuman
+    (dashboard)/poster/       Manajemen poster slide
+    (dashboard)/jadwal/       Manajemen jadwal harian lab/prodi
+    (dashboard)/qr/           Manajemen tautan QR code
+    (dashboard)/video/        Manajemen video slide
+    (dashboard)/pengaturan/   Pengaturan durasi & media latar
 components/
-  display/                 clock, sidebar, slideshow, slide types, overlays
-  admin/                   one *Section.tsx per content type + shared bits
+  display/                    Komponen display (IdleClock, Slideshow, ScheduleTable, dll.)
+  admin/                      Komponen form admin & EmergencyBanner
 lib/
-  supabase.ts               browser Supabase client
-  supabase-server.ts        server/SSR Supabase client
-  useAdminTable.ts           shared CRUD/reorder/realtime hook for admin lists
-  date.ts                    Indonesian day/month names, date-window helpers
-  types.ts                   row types for all tables
-middleware.ts                redirects unauthenticated /admin/* to /admin/login
-supabase/schema.sql          full schema: tables, RLS, Realtime, storage bucket
+  supabase.ts                 Supabase browser client
+  supabase-server.ts          Supabase server client (SSR)
+  idleQuotes.ts               Kumpulan kutipan inspiratif Software Engineering
+  types.ts                    TypeScript interface tabel database
+supabase/
+  schema.sql                  Skema lengkap DDL, RLS, Realtime & Storage
+  seed_trpl.sql               Template data awal TRPL
 ```
 
-## Notes on the `/display` implementation
+---
 
-- Every content query is re-filtered against the current time on every
-  render tick (not just once on load), so items disappear the instant they
-  expire even if the screen has been on for hours.
-- Realtime subscriptions on all six tables mean admin edits show up on
-  screen within moments, with no reload.
-- The clock/date avoid `Intl`/`toLocaleDateString` locale support and use
-  hardcoded Indonesian day/month name arrays instead, since old Android
-  STB browsers are inconsistent (or missing) locale data.
-- The crossfade slideshow respects `prefers-reduced-motion` by disabling
-  the fade transition.
-- Empty/error states show a status message with automatic retry instead of
-  a blank screen.
+## 🌐 Panduan Deployment
 
-## Future ideas (not built)
+1. **Deploy Web App ke Vercel**:
+   - Push repository ini ke GitHub / GitLab.
+   - Buat project baru di Vercel dan hubungkan repository ini.
+   - Tambahkan variabel `NEXT_PUBLIC_SUPABASE_URL` dan `NEXT_PUBLIC_SUPABASE_ANON_KEY` pada menu **Settings → Environment Variables**.
+   - Deploy.
 
-- Sync `schedule_items` automatically from Google Calendar.
-- Scope content per-location (e.g. a `location_id` column + admin picker)
-  if more than one display is ever deployed.
+2. **Setup di TV Kiosk / Android TV Box**:
+   - Pasang browser kiosk (misal *Fully Kiosk Browser* atau browser bawaan TV).
+   - Masukkan URL aplikasi: `https://your-app.vercel.app/display`.
+   - Aktifkan mode *Kiosk / Auto-start on boot* agar layar otomatis berjalan saat TV dinyalakan.
+
+---
+
+## 📄 Lisensi & Kontribusi
+
+Dikembangkan dan dipelihara untuk lingkungan **Teknologi Rekayasa Perangkat Lunak (TRPL)** Politeknik WBI.
