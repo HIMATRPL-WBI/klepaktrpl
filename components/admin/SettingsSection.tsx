@@ -47,6 +47,7 @@ export default function SettingsSection({
   const [displayTitle, setDisplayTitle] = useState("Klepak TRPL");
   const [displayLogoUrl, setDisplayLogoUrl] = useState("");
   const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [idleBrightness, setIdleBrightness] = useState("85");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,6 +67,7 @@ export default function SettingsSection({
         setIdleAudioPlaying(data.idle_audio_playing ?? true);
         setDisplayTitle(data.display_title ?? "Klepak TRPL");
         setDisplayLogoUrl(data.display_logo_url ?? "");
+        setIdleBrightness(String(data.idle_background_brightness ?? 85));
       }
     }
     load();
@@ -93,6 +95,7 @@ export default function SettingsSection({
           idle_audio_url: audioUrl,
           display_title: displayTitle.trim() || "Klepak TRPL",
           display_logo_url: logoUrl,
+          idle_background_brightness: Number(idleBrightness),
         })
         .eq("id", 1);
 
@@ -257,6 +260,36 @@ export default function SettingsSection({
               Kelola Foto Latar &rarr;
             </Button>
           </Link>
+        </div>
+
+        <div className="mt-3 flex flex-col gap-1.5 rounded-base border-2 border-border bg-secondary-background p-3">
+          <div className="flex items-center justify-between">
+            <Label className="font-heading text-sm text-foreground">
+              Kecerahan Foto Latar Layar Siaga
+            </Label>
+            <span className="rounded-full border border-main/30 bg-main/10 px-2 py-0.5 font-mono text-xs font-bold text-main">
+              {idleBrightness}%
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="font-mono text-xs font-bold text-foreground/60">20%</span>
+            <input
+              type="range"
+              min="20"
+              max="100"
+              step="5"
+              value={idleBrightness}
+              onChange={(e) => {
+                setIdleBrightness(e.target.value);
+                setSaved(false);
+              }}
+              className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-slate-200 accent-main dark:bg-slate-700"
+            />
+            <span className="font-mono text-xs font-bold text-foreground/60">100%</span>
+          </div>
+          <p className="text-[11px] text-foreground/60">
+            Kecerahan foto saat jam dan kutipan aktif di layar siaga. Lapisan kotak-kotak kini berada di belakang gambar sehingga foto tampil jelas.
+          </p>
         </div>
 
         <Label className="mt-2">

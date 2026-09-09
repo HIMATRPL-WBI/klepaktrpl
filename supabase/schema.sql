@@ -105,12 +105,14 @@ create table if not exists settings (
   idle_audio_playing       boolean not null default true,
   display_title            text default 'Klepak TRPL',
   display_logo_url         text,
+  idle_background_brightness integer not null default 85,
   updated_at               timestamptz not null default now(),
   constraint settings_singleton check (id = 1)
 );
 -- Migration support for existing settings tables
 alter table settings add column if not exists display_title text default 'Klepak TRPL';
 alter table settings add column if not exists display_logo_url text;
+alter table settings add column if not exists idle_background_brightness integer not null default 85;
 
 insert into settings (id, poster_default_seconds)
 values (1, 8)

@@ -5,8 +5,10 @@ import { TECH_STACK } from "@/lib/techLogos";
 
 export default function FloatingTechBackground({
   photoUrl,
+  brightness = 85,
 }: {
   photoUrl?: string | null;
+  brightness?: number;
 }) {
   // Quadruple array for seamless loop across ultra-wide / 4K displays
   const marqueeItems = useMemo(
@@ -16,18 +18,22 @@ export default function FloatingTechBackground({
 
   return (
     <div className="absolute inset-0 overflow-hidden bg-[#07090e] pointer-events-none select-none">
-      {/* Optional Photo Layer (from Supabase or background) */}
+      {/* Cyber Grid Pattern — subtle base layer */}
+      <div className="cyber-grid-bg absolute inset-0 opacity-40" />
+
+      {/* Optional Photo Layer (from Supabase or background) — placed above grid with adjustable brightness */}
       {photoUrl && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={photoUrl}
           alt=""
-          className="absolute inset-0 h-full w-full object-cover opacity-25 filter brightness-75 contrast-110"
+          className="absolute inset-0 h-full w-full object-cover transition-all duration-700"
+          style={{
+            opacity: Math.max(0.15, Math.min(1, brightness / 100)),
+            filter: `brightness(${Math.max(40, Math.min(130, brightness))}%) contrast(105%)`,
+          }}
         />
       )}
-
-      {/* Cyber Grid Pattern — fine & subtle */}
-      <div className="cyber-grid-bg absolute inset-0 opacity-70" />
 
       {/* Soft Ambient Glow in Corners */}
       <div className="absolute -left-20 -top-20 h-80 w-80 rounded-full bg-blue-600/10 blur-[100px]" />

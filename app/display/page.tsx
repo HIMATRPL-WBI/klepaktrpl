@@ -275,6 +275,7 @@ export default function DisplayPage() {
         idleAudioPlaying={settings?.idle_audio_playing ?? true}
         displayLogoUrl={settings?.display_logo_url}
         idleBackgroundUrls={idleBackgroundUrls}
+        idleBrightness={settings?.idle_background_brightness ?? 85}
       />
     </main>
   );

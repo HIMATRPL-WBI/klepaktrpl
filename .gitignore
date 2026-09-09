@@ -1,5 +1,5 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
+perencanaan.md
 # dependencies
 /node_modules
 /.pnp
@@ -66,3 +66,16 @@ id_rsa.pub
 *credentials*.json
 secrets.json
 secrets/
+
+# Internal project plans & notes
+perencanaan.md
+*.plan.md
+
+# Windows system files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# IDE configuration
+.vscode/
+.idea/

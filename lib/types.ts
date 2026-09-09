@@ -83,6 +83,7 @@ export interface Settings {
   idle_youtube_url: string | null;
   idle_audio_url: string | null;
   idle_audio_playing: boolean;
+  idle_background_brightness?: number | null;
   display_title?: string | null;
   display_logo_url?: string | null;
   updated_at: string;

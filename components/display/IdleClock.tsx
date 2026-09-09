@@ -25,15 +25,15 @@ type ClockPosition =
   | "bottom-right";
 
 const QUOTE_VERTICAL_CLASSES: Record<QuoteVertical, string> = {
-  top: "top-14 sm:top-16",
+  top: "top-20 sm:top-24",
   middle: "top-1/2 -translate-y-1/2",
   bottom: "bottom-12 sm:bottom-14",
 };
 
 const CLOCK_POSITION_CLASSES: Record<ClockPosition, string> = {
-  "top-left": "top-14 sm:top-16 left-4 sm:left-8",
-  "top-center": "top-14 sm:top-16 left-1/2 -translate-x-1/2",
-  "top-right": "top-14 sm:top-16 right-4 sm:right-8",
+  "top-left": "top-20 sm:top-24 left-4 sm:left-8",
+  "top-center": "top-20 sm:top-24 left-1/2 -translate-x-1/2",
+  "top-right": "top-20 sm:top-24 right-4 sm:right-8",
   "mid-left": "top-1/2 -translate-y-1/2 left-4 sm:left-8",
   "mid-center": "top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2",
   "mid-right": "top-1/2 -translate-y-1/2 right-4 sm:right-8",
@@ -100,6 +100,7 @@ export default function IdleClock({
   audioPlaying,
   customLogoUrl,
   backgroundUrls,
+  brightness,
 }: {
   now: Date;
   youtubeUrl: string | null;
@@ -107,6 +108,7 @@ export default function IdleClock({
   audioPlaying: boolean;
   customLogoUrl?: string | null;
   backgroundUrls?: string[];
+  brightness?: number;
 }) {
   const images =
     backgroundUrls && backgroundUrls.length > 0
@@ -190,6 +192,7 @@ export default function IdleClock({
               ? images[natureIndex % images.length]
               : null
           }
+          brightness={brightness}
         />
       )}
 
@@ -198,21 +201,21 @@ export default function IdleClock({
         <audio ref={audioRef} src={audioUrl} loop className="hidden" />
       )}
 
-      {/* Header Dual Logo Badge (Politeknik WBI & HIMATRPL) — Extra compact in portrait */}
-      <div className="absolute inset-x-0 top-4 z-20 flex justify-center portrait:top-3">
-        <div className="idle-foreground-float glass-panel-subtle flex items-center gap-3 rounded-2xl px-5 py-2.5 sm:gap-4 sm:px-7 sm:py-3.5 portrait:gap-2 portrait:rounded-lg portrait:px-2.5 portrait:py-1">
+      {/* Header Dual Logo Badge (Politeknik WBI & HIMATRPL) — Enlarge container & logos */}
+      <div className="absolute inset-x-0 top-3 sm:top-4 z-30 flex justify-center">
+        <div className="idle-foreground-float glass-panel-subtle flex items-center gap-3.5 rounded-2xl px-5 py-2 sm:gap-5 sm:px-7 sm:py-3 portrait:gap-3.5 portrait:rounded-2xl portrait:px-5 portrait:py-2.5 shadow-lg">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/logos/wbi.webp"
             alt="Politeknik WBI"
-            className="h-8 w-auto object-contain drop-shadow sm:h-11 portrait:h-5"
+            className="h-8 w-auto object-contain drop-shadow sm:h-11 portrait:h-9"
           />
-          <div className="h-6 w-px bg-white/20 sm:h-8 portrait:h-3.5" />
+          <div className="h-6 w-px bg-white/25 sm:h-8 portrait:h-7" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={customLogoUrl || "/logos/trpl.png"}
             alt="TRPL"
-            className="h-8 w-auto object-contain drop-shadow sm:h-11 portrait:h-5"
+            className="h-8 w-auto object-contain drop-shadow sm:h-11 portrait:h-9"
           />
         </div>
       </div>

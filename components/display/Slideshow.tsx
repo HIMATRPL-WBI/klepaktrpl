@@ -26,6 +26,7 @@ export default function Slideshow({
   idleAudioPlaying,
   displayLogoUrl,
   idleBackgroundUrls,
+  idleBrightness,
 }: {
   views: DisplayView[];
   now: Date;
@@ -35,6 +36,7 @@ export default function Slideshow({
   idleAudioPlaying?: boolean;
   displayLogoUrl?: string | null;
   idleBackgroundUrls?: string[];
+  idleBrightness?: number;
 }) {
   const [index, setIndex] = useState(0);
   const [visible, setVisible] = useState(true);
@@ -134,6 +136,7 @@ export default function Slideshow({
             audioPlaying={idleAudioPlaying ?? true}
             customLogoUrl={displayLogoUrl}
             backgroundUrls={idleBackgroundUrls}
+            brightness={idleBrightness}
           />
         )}
         {current.kind === "announcements" && (
